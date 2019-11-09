@@ -1,0 +1,14 @@
+version: "3.5"
+services: 
+  pulseaudio:
+    build: .
+    container_name: "pulseaudio_server"
+    ports: 
+      - "4713:4713"
+    devices: 
+      - "/dev/snd"
+    volumes: 
+      - "/var/run/dbus:/var/run/dbus"
+    privileged: true
+
+  

@@ -1,0 +1,10 @@
+.nofail
+
+    # load-module module-alsa-source device="plughw:PCH" tsched=1
+    load-module module-alsa-source device="default" tsched=1
+    #load-module module-alsa-sink device="plughw:PCH" tsched=1
+    load-module module-alsa-sink device="plughw:PCH" tsched=1
+    load-module module-native-protocol-tcp auth-ip-acl=0.0.0.0/0 auth-anonymous=1
+
+
+.fail
