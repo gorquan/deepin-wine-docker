@@ -33,11 +33,11 @@ RUN apt install -y deepin-fonts-wine deepin-libwine deepin-wine32 deepin-wine de
 #     && wget https://mirrors.huaweicloud.com/deepin/pool/non-free/d/deepin-wine/deepin-wine32-tools_${VERSION}_i386.deb && apt install -y ./deepin-wine32-tools_2.18-18_i386.deb \
 #     && apt install -y deepin-wine-plugin deepin-wine-plugin-virtual deepin-wine-helper deepin-wine-uninstaller
 
-ENV LC_CTYPE=zh_CN.UTF-8 XMODIFIERS="@im=fcitx"
+ENV LC_CTYPE=en_US.UTF-8 XMODIFIERS="@im=fcitx"
 
 # after the comment code, the garbled problem is solved.
-# RUN locale-gen en_US.UTF-8 zh_CN.UTF-8 zh_CN.GBK \
-#     && update-locale LANG=zh_CN.UTF-8
+RUN locale-gen en_US.UTF-8 zh_CN.UTF-8 zh_CN.GBK \
+    && update-locale LANG=en_US.UTF-8
 
 COPY ./run.sh /home/run.sh
 
