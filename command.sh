@@ -1,6 +1,5 @@
 #! /bin/bash
 
-
 toHelp() {
     echo "hello, world"
 }
@@ -122,7 +121,6 @@ toStopSoftware() {
     fi
 }
 
-# todo: judge
 toStopSoftwareContainer() {
     docker ps -a | grep "deepin-wine-$1" 2>&1 >/dev/null
     if [ $? -eq 0 ]; then
@@ -131,9 +129,9 @@ toStopSoftwareContainer() {
     echo "close $1 container finish.."
 }
 
-# todu: jedge
 toClosePulseAudio() {
     if [ $# -eq 1 ]; then
+        echo "start to close pulseaudio.."
         docker ps | grep "deepin-wine" 2>&1 >/dev/null
         if [ $? -eq 0 ]; then
             stopAppResult=$(docker stop $(docker ps | grep "deepin-wine" | awk '{print $1 }') >/dev/null 2>&1) && echo "stop application successfully.. now start to stop pulseaudio-server.." || {
@@ -188,20 +186,35 @@ toUninstall() {
     fi
 }
 
-# todu: judge
 toUpgrade() {
     if [ $# -eq 1 ]; then
         echo "start to upgrade.."
-        docker ps | grep "deepin-wine" 2>&1 >/dev/null
+        docker images | grep "deepin-wine" 2>&1 >/dev/null
         if [ $? -eq 0 ]; then
-            wineContainers=$(docker ps | grep "deepin-wine" | awk '{print $1}')
-            wineImages=$(docker images | grep "deepin-wine" | awk '{print $3}')
-            removeWineResult=$(docker stop $wineContainers && docker rm $wineContainers && docker rmi $wineImages >/dev/null 2>&1) && echo "stop and remove wine containers successfully.. start to stop and rebuild pulseaudio server container.." || {
-                echo "stop and remove wine containers failed.. the reason is $removeWineResult.."
-                exit
-            }
+            docker ps | grep "deepin-wine" 2>&1 >/dev/null
+            if [ $? -eq 0 ]; then
+                runContainers=$(docker ps | grep "deepin-wine" | awk '{print $1}')
+                stopWineResult=$(docker stop $runContainers) && echo "stop wine containers successfully.." || {
+                    echo "stop wine containers failed.. the reason is $stopWineResult.."
+                    exit
+                }
+            fi
+            docker ps -a | grep "deepin-wine" 2>&1 >/dev/null
+            if [ $? -eq 0 ]; then
+                wineContainer=$(docker ps -a | grep "deepin-wine" | awk '{print $1}')
+                removeWineResult=$(docker rm $wineContainer) && echo "remove wine containers successfully.." || {
+                    echo "remove wine containers failed.. the reason is $removeWineResult.."
+                    exit
+                }
+                wineImages=$(docker images | grep "deepin-wine" | awk '{print $3}')
+                removeImageResult=$(docker rmi $wineImages >/dev/null 2>&1) && echo "remove application containers successfully.." || {
+                    echo "remove applications failed.. the reason is $removeImageResult.."
+                    exit
+                }
+            fi
+
         fi
-        upgradePulseAudioResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml down && docker-compose -f $1/pulseaudio-server/docker-compose.yml build >/dev/null 2>&1) && echo "rebuild the pulseaudio server container successfully.." || {
+        upgradePulseAudioResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml down >/dev/null 2>&1 && docker-compose -f $1/pulseaudio-server/docker-compose.yml build >/dev/null 2>&1) && echo "rebuild the pulseaudio server container successfully.." || {
             echo "rebuild pulseaudio failed.. the reason is $upgradePulseAudioResult"
             exit
         }
