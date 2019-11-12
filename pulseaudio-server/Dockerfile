@@ -22,6 +22,9 @@ RUN useradd -u ${UID} -m -d ${HOME} -s /usr/sbin/nologin ${USER} \
     && mkdir -p ${HOME}/.config/pulse \
     && chown -Rh ${USER}:${USER} -- ${HOME}
 
+RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && echo "Asia/Shanghai" > /etc/timezone
+
 WORKDIR ${HOME}
 USER ${USER}
 VOLUME [ "/tmp", "${HOME}/.config/pulse" ]

@@ -35,9 +35,11 @@ RUN apt install -y deepin-fonts-wine deepin-libwine deepin-wine32 deepin-wine de
 
 ENV LC_CTYPE=en_US.UTF-8 XMODIFIERS="@im=fcitx"
 
-# after the comment code, the garbled problem is solved.
 RUN locale-gen en_US.UTF-8 zh_CN.UTF-8 zh_CN.GBK \
     && update-locale LANG=en_US.UTF-8
+
+RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && echo "Asia/Shanghai" > /etc/timezone
 
 COPY ./run.sh /home/run.sh
 

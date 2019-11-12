@@ -42,17 +42,17 @@ $ ./command.sh -d
 $ ./command.sh -u
 ```
 
-* 尚未完成功能
+* 待完成清单列表
     - [x] 卸载容器
     - [x] 容器升级
     - [ ] 文件夹挂载问题
-    - [ ] 时间问题
+    - [x] 时间问题
     - [ ] pulseaudio-server 启动判断
-    - [ ] ifconfig 改为 ip addr
+    - [x] ifconfig 改为 ip addr
     - [ ] ...
 
 
-* 应用支持情况
+* 应用测试列表
     - [x] TIM
     - [x] QQ音乐
     - [x] 微信

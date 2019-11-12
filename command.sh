@@ -71,7 +71,7 @@ toRunSoftwareContainer() {
             if [ ! -d "$HOME/Documents/$appName" ]; then
                 mkdir -p $HOME/Documents/$appName
             fi
-            docker0IP=$(ifconfig docker0 | grep "netmask" | awk '{print $2}')
+            docker0IP=$(ip addr | grep 'docker0' | grep 'inet' | cut -c 10- | cut -c -10 )
             runResult=$(docker run -d -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/Documents/$appName:/home -e DISPLAY=unix$DISPLAY -e GDK_SCALE -e GDK_DPI_SCALE -e PULSE_SERVER=tcp:$docker0IP:4713 --name deepin-wine-$1 deepin-wine-$1-image >/dev/null 2>&1) && echo "$1 container run successfully.. enjoy!" || echo "$1 container run failed.. the reason is $runResult"
         fi
     else
@@ -96,7 +96,7 @@ toRunSoftwareContainer() {
         if [ ! -d "$HOME/Documents/$appName" ]; then
             mkdir -p $HOME/Documents/$appName
         fi
-        docker0IP=$(ifconfig docker0 | grep "netmask" | awk '{print $2}')
+        docker0IP=$(ip addr | grep 'docker0' | grep 'inet' | cut -c 10- | cut -c -10 )
         buildResult=$(docker build -t deepin-wine-$1-image $2/wine/$appName/ >/dev/null 2>&1) && runResult=$(docker run -d -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/Documents/$appName:/home/files -e DISPLAY=unix$DISPLAY -e GDK_SCALE -e GDK_DPI_SCALE -e PULSE_SERVER=tcp:$docker0IP:4713 --name deepin-wine-$1 deepin-wine-$1-image >/dev/null 2>&1) && echo "$1 container build and run successfully.. enjoy!" || echo "$1 container build and run failed.. the reason is $buildResult, $runResult"
     fi
 }
@@ -161,7 +161,7 @@ toUninstall() {
             docker ps -a | grep "deepin-wine" 2>&1 >/dev/null
             if [ $? -eq 0 ]; then
                 wineContainer=$(docker ps -a | grep "deepin-wine" | awk '{print $1}')
-                removeWineContainer=$(docker rm $wineContainer >/dev/null 2>&1) && echo "remove wine containers successfully.." || {
+                removeWineContainer=$(docker rm $wineContainer >/dev/null 2>&1) && echo "remove wine cw0BkNFBhJk3fontainers successfully.." || {
                     echo "remove wine containers failed.. the reason $removeWineContainer"
                     exit
                 }
@@ -235,8 +235,6 @@ toUpgrade() {
 #     echo "docker command not found, please install docker.Abotring."
 #     exit
 # }
-
-# todo ifconfig
 
 xhostState=$(xhost +local:) && echo "start xhost successfully.." || echo "start xhost failed.. the reason is $xhost.."
 
