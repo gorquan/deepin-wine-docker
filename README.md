@@ -47,7 +47,7 @@ $ ./command.sh -u
     - [x] 容器升级
     - [ ] 文件夹挂载问题
     - [x] 时间问题
-    - [ ] pulseaudio-server 启动判断
+    - [x] pulseaudio-server 启动判断
     - [x] ifconfig 改为 ip addr
     - [ ] ...
 

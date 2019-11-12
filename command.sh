@@ -39,15 +39,42 @@ toStartSoftware() {
 }
 
 toRunSoftwareContainer() {
-    docker images | grep "deepin-wine-$1" 2>&1 >/dev/null
+    docker ps | grep "pulseaudio_server" 2>&1 >/dev/null
     if [ $? -eq 0 ]; then
-        docker ps -a | grep "deepin-wine-$1" 2>&1 >/dev/null
+        docker images | grep "deepin-wine-$1" 2>&1 >/dev/null
         if [ $? -eq 0 ]; then
-            docker ps | grep "deepin-wine-$1" 2>&1 >/dev/null
+            docker ps -a | grep "deepin-wine-$1" 2>&1 >/dev/null
             if [ $? -eq 0 ]; then
-                startResult=$(docker exec deepin-wine-$1 /bin/bash -c "/home/run.sh" >/dev/null 2>&1) && echo "restart $1 application successfully" || echo "restart $1 application failed, the reason is $startResult"
+                docker ps | grep "deepin-wine-$1" 2>&1 >/dev/null
+                if [ $? -eq 0 ]; then
+                    startResult=$(docker exec deepin-wine-$1 /bin/bash -c "/home/run.sh" >/dev/null 2>&1) && echo "restart $1 application successfully" || echo "restart $1 application failed, the reason is $startResult"
+                else
+                    startResult=$(docker start deepin-wine-$1 >/dev/null 2>&1) && echo "start $1 container successfully.." || echo "start $1 container failed, reason is: $startResult.."
+                fi
             else
-                startResult=$(docker start deepin-wine-$1 >/dev/null 2>&1) && echo "start $1 container successfully.." || echo "start $1 container failed, reason is: $startResult.."
+                case $1 in
+                wechat)
+                    appName='Wechat'
+                    ;;
+                tim)
+                    appName='TIM'
+                    ;;
+                thunder)
+                    appName='thunder'
+                    ;;
+                qqmusic)
+                    appName='QQMusic'
+                    ;;
+                    # if you need to launch another app, add the app name here.
+                *)
+                    echo "unsupport your application"
+                    ;;
+                esac
+                if [ ! -d "$HOME/Documents/$appName" ]; then
+                    mkdir -p $HOME/Documents/$appName
+                fi
+                docker0IP=$(ip addr | grep 'docker0' | grep 'inet' | cut -c 10- | cut -c -10)
+                runResult=$(docker run -d -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/Documents/$appName:/home -e DISPLAY=unix$DISPLAY -e GDK_SCALE -e GDK_DPI_SCALE -e PULSE_SERVER=tcp:$docker0IP:4713 --name deepin-wine-$1 deepin-wine-$1-image >/dev/null 2>&1) && echo "$1 container run successfully.. enjoy!" || echo "$1 container run failed.. the reason is $runResult"
             fi
         else
             case $1 in
@@ -71,33 +98,11 @@ toRunSoftwareContainer() {
             if [ ! -d "$HOME/Documents/$appName" ]; then
                 mkdir -p $HOME/Documents/$appName
             fi
-            docker0IP=$(ip addr | grep 'docker0' | grep 'inet' | cut -c 10- | cut -c -10 )
-            runResult=$(docker run -d -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/Documents/$appName:/home -e DISPLAY=unix$DISPLAY -e GDK_SCALE -e GDK_DPI_SCALE -e PULSE_SERVER=tcp:$docker0IP:4713 --name deepin-wine-$1 deepin-wine-$1-image >/dev/null 2>&1) && echo "$1 container run successfully.. enjoy!" || echo "$1 container run failed.. the reason is $runResult"
+            docker0IP=$(ip addr | grep 'docker0' | grep 'inet' | cut -c 10- | cut -c -10)
+            buildResult=$(docker build -t deepin-wine-$1-image $2/wine/$appName/ >/dev/null 2>&1) && runResult=$(docker run -d -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/Documents/$appName:/home/files -e DISPLAY=unix$DISPLAY -e GDK_SCALE -e GDK_DPI_SCALE -e PULSE_SERVER=tcp:$docker0IP:4713 --name deepin-wine-$1 deepin-wine-$1-image >/dev/null 2>&1) && echo "$1 container build and run successfully.. enjoy!" || echo "$1 container build and run failed.. the reason is $buildResult, $runResult"
         fi
     else
-        case $1 in
-        wechat)
-            appName='Wechat'
-            ;;
-        tim)
-            appName='TIM'
-            ;;
-        thunder)
-            appName='thunder'
-            ;;
-        qqmusic)
-            appName='QQMusic'
-            ;;
-            # if you need to launch another app, add the app name here.
-        *)
-            echo "unsupport your application"
-            ;;
-        esac
-        if [ ! -d "$HOME/Documents/$appName" ]; then
-            mkdir -p $HOME/Documents/$appName
-        fi
-        docker0IP=$(ip addr | grep 'docker0' | grep 'inet' | cut -c 10- | cut -c -10 )
-        buildResult=$(docker build -t deepin-wine-$1-image $2/wine/$appName/ >/dev/null 2>&1) && runResult=$(docker run -d -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/Documents/$appName:/home/files -e DISPLAY=unix$DISPLAY -e GDK_SCALE -e GDK_DPI_SCALE -e PULSE_SERVER=tcp:$docker0IP:4713 --name deepin-wine-$1 deepin-wine-$1-image >/dev/null 2>&1) && echo "$1 container build and run successfully.. enjoy!" || echo "$1 container build and run failed.. the reason is $buildResult, $runResult"
+        echo "pulseaudio server not running, please execute the command './command.sh' to init pulseaudio server"
     fi
 }
 
@@ -124,22 +129,26 @@ toStopSoftware() {
 toStopSoftwareContainer() {
     docker ps -a | grep "deepin-wine-$1" 2>&1 >/dev/null
     if [ $? -eq 0 ]; then
-        result=$(docker stop deepin-wine-$1 >/dev/null 2>&1) && echo "close $1 container successfully.." || echo "close $1 container failed, reason is: $result.."
+        result=$(docker stop deepin-wine-$1 >/dev/null 2>&1) || echo "close $1 container failed, reason is: $result.."
     fi
-    echo "close $1 container finish.."
+    echo "close $1 container successfully.."
 }
 
 toClosePulseAudio() {
     if [ $# -eq 1 ]; then
         echo "start to close pulseaudio.."
-        docker ps | grep "deepin-wine" 2>&1 >/dev/null
+        docker images | grep "pulseaudio-server_pulseaudio" 2>&1 >/dev/null
         if [ $? -eq 0 ]; then
-            stopAppResult=$(docker stop $(docker ps | grep "deepin-wine" | awk '{print $1 }') >/dev/null 2>&1) && echo "stop application successfully.. now start to stop pulseaudio-server.." || {
-                echo "stop application failed, the reason is $stopAppResult.."
-                exit
-            }
+            docker ps | grep "deepin-wine" 2>&1 >/dev/null
+            if [ $? -eq 0 ]; then
+                stopAppResult=$(docker stop $(docker ps | grep "deepin-wine" | awk '{print $1 }') >/dev/null 2>&1) && echo "stop application successfully.. now start to stop pulseaudio-server.." || {
+                    echo "stop application failed, the reason is $stopAppResult.."
+                    exit
+                }
+            fi
+            stopResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml down >/dev/null 2>&1) || echo "stop pulseaudio server failed, the reason is $stopResult.."
         fi
-        stopResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml down >/dev/null 2>&1) && echo "stop pulseaudio server successfully.." || echo "stop pulseaudio server failed, the reason is $stopResult.."
+        echo "stop pulseaudio server successfully.."
     else
         toHelp
     fi
@@ -161,8 +170,8 @@ toUninstall() {
             docker ps -a | grep "deepin-wine" 2>&1 >/dev/null
             if [ $? -eq 0 ]; then
                 wineContainer=$(docker ps -a | grep "deepin-wine" | awk '{print $1}')
-                removeWineContainer=$(docker rm $wineContainer >/dev/null 2>&1) && echo "remove wine cw0BkNFBhJk3fontainers successfully.." || {
-                    echo "remove wine containers failed.. the reason $removeWineContainer"
+                removeWineResult=$(docker rm $wineContainer >/dev/null 2>&1) && echo "remove wine containers successfully.." || {
+                    echo "remove wine containers failed.. the reason $removeWineResult"
                     exit
                 }
             fi
@@ -194,7 +203,7 @@ toUpgrade() {
             docker ps | grep "deepin-wine" 2>&1 >/dev/null
             if [ $? -eq 0 ]; then
                 runContainers=$(docker ps | grep "deepin-wine" | awk '{print $1}')
-                stopWineResult=$(docker stop $runContainers) && echo "stop wine containers successfully.." || {
+                stopWineResult=$(docker stop $runContainers >/dev/null 2>&1) && echo "stop wine containers successfully.." || {
                     echo "stop wine containers failed.. the reason is $stopWineResult.."
                     exit
                 }
@@ -202,16 +211,16 @@ toUpgrade() {
             docker ps -a | grep "deepin-wine" 2>&1 >/dev/null
             if [ $? -eq 0 ]; then
                 wineContainer=$(docker ps -a | grep "deepin-wine" | awk '{print $1}')
-                removeWineResult=$(docker rm $wineContainer) && echo "remove wine containers successfully.." || {
+                removeWineResult=$(docker rm $wineContainer >/dev/null 2>&1) && echo "remove wine containers successfully.." || {
                     echo "remove wine containers failed.. the reason is $removeWineResult.."
                     exit
                 }
-                wineImages=$(docker images | grep "deepin-wine" | awk '{print $3}')
-                removeImageResult=$(docker rmi $wineImages >/dev/null 2>&1) && echo "remove application containers successfully.." || {
-                    echo "remove applications failed.. the reason is $removeImageResult.."
-                    exit
-                }
             fi
+            wineImages=$(docker images | grep "deepin-wine" | awk '{print $3}')
+            removeImageResult=$(docker rmi $wineImages >/dev/null 2>&1) && echo "remove application containers successfully.." || {
+                echo "remove applications failed.. the reason is $removeImageResult.."
+                exit
+            }
 
         fi
         upgradePulseAudioResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml down >/dev/null 2>&1 && docker-compose -f $1/pulseaudio-server/docker-compose.yml build >/dev/null 2>&1) && echo "rebuild the pulseaudio server container successfully.." || {
