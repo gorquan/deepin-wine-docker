@@ -1,5 +1,6 @@
 #! /bin/bash
 
+
 toHelp() {
     echo "hello, world"
 }
@@ -9,7 +10,7 @@ toRunPulseAudio() {
         echo "start to init pulseaudio server"
         docker images | grep "pulseaudio-server_pulseaudio" 2>&1 >/dev/null
         if [ $? -eq 0 ]; then
-            startResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml up -d >/dev/null 2>&1) && echo "pulseaudio server start successfully.." || echo "pulseaudio server start failed, the reason is $startResult.."
+            startResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml up -d >/dev/null 2>&1) && echo "pulseaudio server start successfully.. Please execute the command './command.sh -r applicationName' to start application container" || echo "pulseaudio server start failed, the reason is $startResult.."
         else
             buildResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml build >/dev/null 2>&1) && startResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml up -d >/dev/null 2>&1) && echo "pulseaudio server build and start successfully.. Please execute the command './command.sh -r applicationName' to start application container" || echo "pulseaudio server build and start failed.. the reason is $buildResult.."
         fi
@@ -72,7 +73,7 @@ toRunSoftwareContainer() {
                 mkdir -p $HOME/Documents/$appName
             fi
             docker0IP=$(ifconfig docker0 | grep "netmask" | awk '{print $2}')
-            runResult=$(docker run -d -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/Documents/$appName:/home -e DISPLAY=unix$DISPLAY -e GDK_SCALE -e GDK_DPI_SCALE -e PULSE_SERVER=tcp:$docker0IP:4713 --name deepin-wine-$1 deepin-wine-$1-image >/dev/null 2>&1) && echo "$1 container run successfully.." || echo "$1 container run failed.. the reason is $runResult"
+            runResult=$(docker run -d -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/Documents/$appName:/home -e DISPLAY=unix$DISPLAY -e GDK_SCALE -e GDK_DPI_SCALE -e PULSE_SERVER=tcp:$docker0IP:4713 --name deepin-wine-$1 deepin-wine-$1-image >/dev/null 2>&1) && echo "$1 container run successfully.. enjoy!" || echo "$1 container run failed.. the reason is $runResult"
         fi
     else
         case $1 in
@@ -97,7 +98,7 @@ toRunSoftwareContainer() {
             mkdir -p $HOME/Documents/$appName
         fi
         docker0IP=$(ifconfig docker0 | grep "netmask" | awk '{print $2}')
-        buildResult=$(docker build -t deepin-wine-$1-image $2/wine/$appName/ >/dev/null 2>&1) && runResult=$(docker run -d -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/Documents/$appName:/home/files -e DISPLAY=unix$DISPLAY -e GDK_SCALE -e GDK_DPI_SCALE -e PULSE_SERVER=tcp:$docker0IP:4713 --name deepin-wine-$1 deepin-wine-$1-image >/dev/null 2>&1) && echo "$1 container build and run successfully.." || echo "$1 container build and run failed.. the reason is $buildResult, $runResult"
+        buildResult=$(docker build -t deepin-wine-$1-image $2/wine/$appName/ >/dev/null 2>&1) && runResult=$(docker run -d -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/Documents/$appName:/home/files -e DISPLAY=unix$DISPLAY -e GDK_SCALE -e GDK_DPI_SCALE -e PULSE_SERVER=tcp:$docker0IP:4713 --name deepin-wine-$1 deepin-wine-$1-image >/dev/null 2>&1) && echo "$1 container build and run successfully.. enjoy!" || echo "$1 container build and run failed.. the reason is $buildResult, $runResult"
     fi
 }
 
@@ -123,7 +124,11 @@ toStopSoftware() {
 
 # todo: judge
 toStopSoftwareContainer() {
-    result=$(docker stop deepin-wine-$1 >/dev/null 2>&1) && echo "close $1 container successfully.." || echo "close $1 container failed, reason is: $result.."
+    docker ps -a | grep "deepin-wine-$1" 2>&1 >/dev/null
+    if [ $? -eq 0 ]; then
+        result=$(docker stop deepin-wine-$1 >/dev/null 2>&1) && echo "close $1 container successfully.." || echo "close $1 container failed, reason is: $result.."
+    fi
+    echo "close $1 container finish.."
 }
 
 # todu: jedge
