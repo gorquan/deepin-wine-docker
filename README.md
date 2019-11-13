@@ -4,7 +4,7 @@
     能够在docker中运行wine程序，并能够显示画面和播放声音。
 
 * 使用前注意
-    1. 部分系统没有`ifconfig`命令，使用前先确保能够使用`ifconfig`命令再执行脚本。(以后将改为`ip addr`)
+    1. ~~部分系统没有`ifconfig`命令，使用前先确保能够使用`ifconfig`命令再执行脚本。(以后将改为`ip addr`)~~ 已经更换为`ip addr`
     2. 容器均基于ubuntu进行封装，请先前往[DaoCloud](https://www.daocloud.io/mirror#accelerator-doc)安装Docker镜像站或者先执行`docker pull ubuntu`下载ubuntu容器镜像。
     3. 请执行`chmod a+x command.sh`赋予脚本执行权限，否则脚本无法执行。
     4. 请先执行`./command.sh -i`初始化pulseaudio-server,否则容器无法输出声音。
@@ -22,7 +22,7 @@ $ ./command.sh -r appliactionName
 start xhost successfully..
 start to start applicationName application
 start applicationName container successfully..
-# start xhost successfully..
+# start xhost successfully..wenjian
 # start to start qqmusic application
 # start qqmusic container successfully..
 
@@ -35,10 +35,10 @@ start xhost successfully..
 stop application successfully.. now start to stop pulseaudio-server..
 stop pulseaudio server successfully..
 
-# 卸载方法(尚未实现)
+# 卸载方法
 $ ./command.sh -d
 
-# 容器升级(尚未实现)
+# 容器升级
 $ ./command.sh -u
 ```
 
@@ -49,6 +49,8 @@ $ ./command.sh -u
     - [x] 时间问题
     - [x] pulseaudio-server 启动判断
     - [x] ifconfig 改为 ip addr
+    - [ ] 挂载麦克风
+    - [ ] 挂载摄像头
     - [ ] ...
 
 
@@ -75,9 +77,10 @@ $ ./command.sh -u
     * wine程序没有声音或提示不存在声卡
         * 因为一些操作问题（例如启动声卡后插入耳机），会导致docker中声音无法输出。此情况请先执行`./command.sh -c` 关闭wine程序容器和pulseaudio-server容器，再执行`./command.sh -i` 初始化pulseaudio-server，最后执行`./command.sh -r applicationName` 运行应用。
 
+
 * issue与pull requests
     * 如果遇到问题或有好的建议，欢迎提交[issue](https://github.com/gorquan/deepin-wine-docker/issues)
-        * 注意： 提交issue请提供一下信息，如不按照一下格式，一律关闭issue
+        * 注意： 提交issue请提供信息，如不按照以下格式，一律关闭issue
             1. 运行平台(例：Ubuntu 18.04)
             2. 运行软件(例：Wechat)
             3. 错误信息及截图

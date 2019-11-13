@@ -7,11 +7,16 @@ toHelp() {
 toRunPulseAudio() {
     if [ $# -eq 1 ]; then
         echo "start to init pulseaudio server"
-        docker images | grep "pulseaudio-server_pulseaudio" 2>&1 >/dev/null
-        if [ $? -eq 0 ]; then
-            startResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml up -d >/dev/null 2>&1) && echo "pulseaudio server start successfully.. Please execute the command './command.sh -r applicationName' to start application container" || echo "pulseaudio server start failed, the reason is $startResult.."
+        docker ps | grep "deepin-wine" 2>&1 >/dev/null
+        if [ $? -ne 0 ]; then
+            docker images | grep "pulseaudio-server_pulseaudio" 2>&1 >/dev/null
+            if [ $? -eq 0 ]; then
+                startResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml up -d >/dev/null 2>&1) && echo "pulseaudio server start successfully.. Please execute the command './command.sh -r applicationName' to start application container" || echo "pulseaudio server start failed, the reason is $startResult.."
+            else
+                buildResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml build 2>&1 >/dev/null) && startResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml up -d >/dev/null 2>&1) && echo "pulseaudio server build and start successfully.. Please execute the command './command.sh -r applicationName' to start application container" || echo "pulseaudio server build and start failed.. the reason is $buildResult, and $startResult.."
+            fi
         else
-            buildResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml build >/dev/null 2>&1) && startResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml up -d >/dev/null 2>&1) && echo "pulseaudio server build and start successfully.. Please execute the command './command.sh -r applicationName' to start application container" || echo "pulseaudio server build and start failed.. the reason is $buildResult.."
+            echo "application exist! please execute the command './command.sh -d' to uninstall or execute the command './command.sh -',then execute command './command.sh -i' to init pulseaudio server"
         fi
     else
         toHelp
@@ -60,7 +65,7 @@ toRunSoftwareContainer() {
                     appName='TIM'
                     ;;
                 thunder)
-                    appName='thunder'
+                    appName='Thunder'
                     ;;
                 qqmusic)
                     appName='QQMusic'
@@ -102,7 +107,7 @@ toRunSoftwareContainer() {
             buildResult=$(docker build -t deepin-wine-$1-image $2/wine/$appName/ >/dev/null 2>&1) && runResult=$(docker run -d -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/Documents/$appName:/home/files -e DISPLAY=unix$DISPLAY -e GDK_SCALE -e GDK_DPI_SCALE -e PULSE_SERVER=tcp:$docker0IP:4713 --name deepin-wine-$1 deepin-wine-$1-image >/dev/null 2>&1) && echo "$1 container build and run successfully.. enjoy!" || echo "$1 container build and run failed.. the reason is $buildResult, $runResult"
         fi
     else
-        echo "pulseaudio server not running, please execute the command './command.sh' to init pulseaudio server"
+        echo "pulseaudio server not running, please execute the command './command.sh -i' to init pulseaudio server"
     fi
 }
 
@@ -137,15 +142,15 @@ toStopSoftwareContainer() {
 toClosePulseAudio() {
     if [ $# -eq 1 ]; then
         echo "start to close pulseaudio.."
-        docker images | grep "pulseaudio-server_pulseaudio" 2>&1 >/dev/null
+        docker ps | grep "deepin-wine" 2>&1 >/dev/null
         if [ $? -eq 0 ]; then
-            docker ps | grep "deepin-wine" 2>&1 >/dev/null
-            if [ $? -eq 0 ]; then
-                stopAppResult=$(docker stop $(docker ps | grep "deepin-wine" | awk '{print $1 }') >/dev/null 2>&1) && echo "stop application successfully.. now start to stop pulseaudio-server.." || {
-                    echo "stop application failed, the reason is $stopAppResult.."
-                    exit
-                }
-            fi
+            stopAppResult=$(docker stop $(docker ps | grep "deepin-wine" | awk '{print $1 }') >/dev/null 2>&1) && echo "stop application successfully.. now start to stop pulseaudio-server.." || {
+                echo "stop application failed, the reason is $stopAppResult.."
+                exit
+            }
+        fi
+        docker ps | grep "pulseaudio_server" 2>&1 >/dev/null
+        if [ $? -eq 0 ]; then
             stopResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml down >/dev/null 2>&1) || echo "stop pulseaudio server failed, the reason is $stopResult.."
         fi
         echo "stop pulseaudio server successfully.."
@@ -184,8 +189,15 @@ toUninstall() {
         docker images | grep "pulseaudio-server_pulseaudio" 2>&1 >/dev/null
         if [ $? -eq 0 ]; then
             pulseaudioImages=$(docker images | grep "pulseaudio-server_pulseaudio" | awk '{print $3}')
-            stopPulseAudioResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml down >/dev/null 2>&1 && docker rmi $pulseaudioImages >/dev/null 2>&1) && echo "stop pulseaudio server successfully.." || {
-                echo "stop and remove pulseaudio server failed.. the reason is $stopPulseAudioResult.."
+            docker ps | grep "pulseaudio_server" 2>&1 >/dev/null
+            if [ $? -eq 0 ]; then
+                stopPulseAudioResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml down >/dev/null 2>&1) && echo "stop pulseaudio server successfully.." || {
+                    echo "stop pulseaudio pulseaudio server failed.. the reason is $stopPulseAudioResult"
+                    exit
+                }
+            fi
+            removePulseAudioResult=$(docker rmi $pulseaudioImages >/dev/null 2>&1) && echo "remove pulseaudio server successfully.." || {
+                echo "remove pulseaudio server failed.. the reason is $removePulseAudioResult.."
                 exit
             }
         fi
@@ -223,7 +235,14 @@ toUpgrade() {
             }
 
         fi
-        upgradePulseAudioResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml down >/dev/null 2>&1 && docker-compose -f $1/pulseaudio-server/docker-compose.yml build >/dev/null 2>&1) && echo "rebuild the pulseaudio server container successfully.." || {
+        docker ps | grep "pulseaudio_server" 2>&1 >/dev/null
+        if [ $? -eq 0 ]; then
+            stopPulseAudioResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml down >/dev/null 2>&1) && echo "stop pulseaudio server successfully" || {
+                echo "stop pulseaudio server failed, the reason is $stopPulseAudioResult"
+                exit
+            }
+        fi
+        upgradePulseAudioResult=$(docker-compose -f $1/pulseaudio-server/docker-compose.yml build >/dev/null 2>&1) && echo "rebuild the pulseaudio server container successfully.." || {
             echo "rebuild pulseaudio failed.. the reason is $upgradePulseAudioResult"
             exit
         }
@@ -233,17 +252,15 @@ toUpgrade() {
     fi
 }
 
-# todo fix
-# type docker >/dev/null 2>&1 || {
-#     echo "docker command not found, please install docker.Abotring."
-#     exit
-# }
+type docker >/dev/null 2>&1 || {
+    echo "docker command not found, please install docker.Abotring."
+    exit
+}
 
-# todo fix
-# type docker-compsose >/dev/null 2>&1 || {
-#     echo "docker command not found, please install docker.Abotring."
-#     exit
-# }
+type docker-compose >/dev/null 2>&1 || {
+    echo "docker-compose command not found, please install docker.Abotring."
+    exit
+}
 
 xhostState=$(xhost +local:) && echo "start xhost successfully.." || echo "start xhost failed.. the reason is $xhost.."
 
