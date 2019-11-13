@@ -22,7 +22,7 @@ $ ./command.sh -r appliactionName
 start xhost successfully..
 start to start applicationName application
 start applicationName container successfully..
-# start xhost successfully..wenjian
+# start xhost successfully..
 # start to start qqmusic application
 # start qqmusic container successfully..
 
