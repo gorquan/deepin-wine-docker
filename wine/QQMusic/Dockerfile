@@ -1,9 +1,11 @@
 FROM ubuntu:latest
 
+ENV DEBIAN_FRONTEND noninteractive
+
 RUN sed -i 's/archive.ubuntu.com/mirrors.163.com/g' /etc/apt/sources.list 
 
 RUN apt update && apt -y upgrade \
-    && apt -y install vim net-tools curl wget ca-certificates locales
+    && apt -y install vim net-tools curl wget ca-certificates locales tzdata
 
 RUN mkdir -p /etc/apt/sources.list.d \
     && touch /etc/apt/sources.list.d/deepin.list \
@@ -38,8 +40,8 @@ ENV LC_CTYPE=en_US.UTF-8 XMODIFIERS="@im=fcitx"
 RUN locale-gen en_US.UTF-8 zh_CN.UTF-8 zh_CN.GBK \
     && update-locale LANG=en_US.UTF-8
 
-RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
-    && echo "Asia/Shanghai" > /etc/timezone
+RUN ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && dpkg-reconfigure -f noninteractive tzdata
 
 COPY ./run.sh /home/run.sh
 

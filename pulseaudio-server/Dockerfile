@@ -10,7 +10,7 @@ ENV HOME /home/${USER}
 RUN sed -i 's/archive.ubuntu.com/mirrors.163.com/g' /etc/apt/sources.list \
     && apt update && apt upgrade -y
 
-RUN apt install -y pulseaudio pulseaudio-utils \
+RUN apt install -y pulseaudio pulseaudio-utils tzdata\
     && apt -y autoremove \
     && apt -y clean
 
@@ -22,8 +22,8 @@ RUN useradd -u ${UID} -m -d ${HOME} -s /usr/sbin/nologin ${USER} \
     && mkdir -p ${HOME}/.config/pulse \
     && chown -Rh ${USER}:${USER} -- ${HOME}
 
-RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
-    && echo "Asia/Shanghai" > /etc/timezone
+RUN ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && dpkg-reconfigure -f noninteractive tzdata
 
 WORKDIR ${HOME}
 USER ${USER}
