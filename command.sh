@@ -79,7 +79,7 @@ toRunSoftwareContainer() {
                     mkdir -p $HOME/Documents/$appName
                 fi
                 docker0IP=$(ip addr | grep 'docker0' | grep 'inet' | cut -c 10- | cut -c -10)
-                runResult=$(docker run -d -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/Documents/$appName:/home -e DISPLAY=unix$DISPLAY -e GDK_SCALE -e GDK_DPI_SCALE -e PULSE_SERVER=tcp:$docker0IP:4713 --name deepin-wine-$1 deepin-wine-$1-image 2>&1 >/dev/null) && echo "$1 container run successfully.. enjoy!" || echo "$1 container run failed.. the reason is $runResult"
+                runResult=$(docker run -d -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/Documents/$appName:/home/files -e DISPLAY=unix$DISPLAY -e GDK_SCALE -e GDK_DPI_SCALE -e PULSE_SERVER=tcp:$docker0IP:4713 --name deepin-wine-$1 deepin-wine-$1-image 2>&1 >/dev/null) && echo "$1 container run successfully.. enjoy!" || echo "$1 container run failed.. the reason is $runResult"
             fi
         else
             case $1 in
