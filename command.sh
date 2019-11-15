@@ -202,6 +202,19 @@ toUninstall() {
             }
         fi
         echo "uninstall deepin-wine-docker successfully!"
+    elif [ $# -eq 2 ]; then
+        docker ps -a | grep "deepin-wine-$2" >/dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            docker ps | grep "deepin-wine-$2" >/dev/null 2>&1
+            if [ $? -eq 0 ]; then
+                stopResult=$(docker stop deepin-wine-$2) && echo "stop the $2 container successfully... now start to remove the $2 container.." || {
+                    echo "stop the $2 container failed.. the reason is $stopResult"
+                    exit
+                }
+            fi
+            removeResult=$(docker rm deepin-wine-$2) && echo "remove the $2 container successfully.." || echo "remove the $2 container failed.."
+        fi
+        echo "uninstall deepin-wine-$2 successfully.. Please execute the command './command.sh -r applicationName' to create and start the $2 container.."
     else
         toHelp
     fi
