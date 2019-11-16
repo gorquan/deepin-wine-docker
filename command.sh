@@ -202,19 +202,31 @@ toUninstall() {
             }
         fi
         echo "uninstall deepin-wine-docker successfully!"
-    elif [ $# -eq 2 ]; then
-        docker ps -a | grep "deepin-wine-$2" >/dev/null 2>&1
+    elif [ $# -eq 3 ]; then
+        docker ps -a | grep "deepin-wine-$3" >/dev/null 2>&1
         if [ $? -eq 0 ]; then
-            docker ps | grep "deepin-wine-$2" >/dev/null 2>&1
+            docker ps | grep "deepin-wine-$3" >/dev/null 2>&1
             if [ $? -eq 0 ]; then
-                stopResult=$(docker stop deepin-wine-$2) && echo "stop the $2 container successfully... now start to remove the $2 container.." || {
-                    echo "stop the $2 container failed.. the reason is $stopResult"
+                stopResult=$(docker stop deepin-wine-$3 2>&1 >/dev/null) && echo "stop the $3 container successfully... now start to remove the $3 container.." || {
+                    echo "stop the $3 container failed.. the reason is $stopResult"
                     exit
                 }
             fi
-            removeResult=$(docker rm deepin-wine-$2) && echo "remove the $2 container successfully.." || echo "remove the $2 container failed.."
+            case $2 in
+            image)
+                removeResult=$(docker rm deepin-wine-$3 2>&1 >/dev/null && docker rmi deepin-wine-$3-image 2>&1 >/dev/null) && echo "remove the $3 container and image successfully.." || {
+                    echo "remove the $3 container failed.. the reason is $removeResult.."
+                }
+                ;;
+            container)
+                removeResult=$(docker rm deepin-wine-$3 2>&1 >/dev/null) && echo "remove the $3 container successfully.." || {
+                    echo "remove the $3 container failed.. the reason is $removeResult.."
+                    exit
+                }
+                ;;
+            esac
         fi
-        echo "uninstall deepin-wine-$2 successfully.. Please execute the command './command.sh -r applicationName' to create and start the $2 container.."
+        echo "uninstall deepin-wine-$3 successfully.. Please execute the command './command.sh -r applicationName' to create and start the $3 container.."
     else
         toHelp
     fi
