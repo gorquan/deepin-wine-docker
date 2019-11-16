@@ -296,7 +296,7 @@ case $1 in
     toClosePulseAudio $command_folder
     ;;
 -d)
-    toUninstall $command_folder
+    toUninstall $command_folder $2
     ;;
 -u)
     toUpgrade $command_folder
