@@ -1,5 +1,7 @@
 # deepin-wine-docker
 
+* tips： 近期因为毕业设计的原因尚未来得及更新，有问题欢迎大家提出issue，我会一一解决
+
 * 简介
 
     能够在docker中运行wine程序，并能够显示画面和播放声音。
